@@ -1,0 +1,34 @@
+AI20 Labs — Sample Company Handbook (for testing the Q&A app)
+
+About
+AI20 Labs is an AI development and strategy studio based in Austin, Texas. The
+company builds Minimum Viable Products and helps organizations integrate AI into
+their existing systems.
+
+Working Hours
+Standard working hours are 9:00 AM to 5:00 PM, Monday through Friday. The company
+operates fully remote, and employees may choose their own schedule as long as
+they overlap at least four hours with the US Central time zone.
+
+Leave Policy
+Full-time employees receive 20 days of paid time off per year, plus 10 public
+holidays. Unused leave can be carried over up to a maximum of 5 days into the
+next calendar year.
+
+Equipment
+Every new engineer receives a company laptop and a one-time 500 USD stipend for
+a home-office setup. Equipment must be returned when leaving the company.
+
+Code Review
+All code must be reviewed by at least one other engineer before being merged to
+the main branch. Continuous integration must pass before review is requested.
+
+Security
+Employees must enable two-factor authentication on all company accounts. API
+keys and secrets must never be committed to a repository; use environment
+variables instead.
+
+--- Try asking the app: ---
+1. "How many paid time off days do employees get?"  (answer is in the document)
+2. "What is the home-office stipend?"                (answer is in the document)
+3. "Who won the football world cup in 2022?"         (NOT in the document -> fallback)

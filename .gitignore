@@ -1,0 +1,14 @@
+# Root-level ignores (each sub-project also has its own .gitignore)
+.DS_Store
+*.log
+.env
+
+# Python
+__pycache__/
+*.pyc
+backend/.venv/
+backend/storage/
+
+# Node
+frontend/node_modules/
+frontend/dist/

@@ -1,0 +1,37 @@
+# Runs the backend + MongoDB together with one command:
+#   docker compose up --build
+#
+# The frontend is deployed separately (Vercel/Netlify), so it's not included
+# here — but you can run it locally with `npm run dev`.
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      # These override values in the container. Put your real GROQ key in a
+      # .env file next to this compose file (compose loads it automatically).
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - LLM_MODEL=${LLM_MODEL:-llama-3.3-70b-versatile}
+      - MONGO_URI=mongodb://mongo:27017
+      - MONGO_DB=ai20_qa
+      - DAPPIER_API_KEY=${DAPPIER_API_KEY:-}
+      - CHROMA_DIR=/app/storage/chroma
+      - UPLOAD_DIR=/app/storage/uploads
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:5173}
+    volumes:
+      # Persist embeddings + uploads on the host so they survive restarts.
+      - ./backend/storage:/app/storage
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  mongo_data:

@@ -1,0 +1,45 @@
+# CI for the Python backend.
+# Runs automatically on every push / PR that touches the backend.
+# It checks the code compiles, imports cleanly, and that the Docker image builds.
+
+name: Backend CI
+
+on:
+  push:
+    branches: [main]
+    paths: ["backend/**", ".github/workflows/backend-ci.yml"]
+  pull_request:
+    paths: ["backend/**", ".github/workflows/backend-ci.yml"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Syntax check
+        run: python -m py_compile app/*.py
+
+      - name: Import smoke test
+        # Confirms the app object builds without a real API key.
+        run: python -c "from app.main import app; print('app import OK', app.title)"
+
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build backend image
+        run: docker build -t ai20-backend ./backend
