@@ -152,6 +152,17 @@ export function useSessions() {
     api.renameSession(id, clean).catch(() => {});
   }, []);
 
+  // Record which document was uploaded into the active chat (per-session, and
+  // persisted to localStorage so it survives a refresh).
+  const setActiveDoc = useCallback(
+    (docName: string) => {
+      setSessions((prev) =>
+        prev.map((s) => (s.id === activeId ? { ...s, docName } : s))
+      );
+    },
+    [activeId]
+  );
+
   const addMessage = useCallback(
     (msg: Message) => {
       setSessions((prev) =>
@@ -199,6 +210,7 @@ export function useSessions() {
     clearChat,
     deleteSession,
     renameSession,
+    setActiveDoc,
     addMessage,
     updateLastMessage,
   };

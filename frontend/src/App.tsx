@@ -20,13 +20,15 @@ export default function App() {
     clearChat,
     deleteSession,
     renameSession,
+    setActiveDoc,
     addMessage,
     updateLastMessage,
   } = useSessions();
 
   const { theme, toggle } = useTheme();
 
-  const [docName, setDocName] = useState<string | null>(null);
+  // The active chat's document (per-session, so switching chats updates it).
+  const docName = active?.docName ?? null;
   const [uploadStatus, setUploadStatus] = useState<string>("");
   const [uploading, setUploading] = useState(false);
   const [useWeb, setUseWeb] = useState(false);
@@ -53,7 +55,7 @@ export default function App() {
     try {
       const res = await api.upload(file, activeId);
       setUploadStatus(res.message);
-      setDocName(res.filename);
+      setActiveDoc(res.filename);
     } catch (err) {
       setUploadStatus(`Upload failed: ${(err as Error).message}`);
     } finally {
@@ -69,6 +71,7 @@ export default function App() {
     setSending(true);
 
     let acc = "";
+    let errored = false;
     try {
       await api.askStream(activeId, question, useWeb, {
         onMeta: (grounded) => updateLastMessage({ grounded }),
@@ -78,10 +81,15 @@ export default function App() {
         },
       });
     } catch (err) {
+      errored = true;
       updateLastMessage({
         content: `⚠️ Error contacting the server: ${(err as Error).message}`,
       });
     } finally {
+      // Guard against an empty stream leaving the bubble stuck on "typing…".
+      if (!errored && !acc.trim()) {
+        updateLastMessage({ content: "I could not generate a response. Please try again." });
+      }
       setSending(false);
     }
   }

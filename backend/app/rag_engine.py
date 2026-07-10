@@ -82,6 +82,22 @@ CHAT_PROMPT = (
     "Answer:"
 )
 
+# Used when NO document chunk matched the question. This keeps the agent from
+# answering off-topic questions from its own world knowledge (the assignment
+# requires an "I don't know" fallback), while still allowing it to answer
+# questions about the conversation itself.
+NO_CONTEXT_PROMPT = (
+    "The user's question did not match anything in the uploaded document.\n"
+    "- If the question is about the earlier conversation (e.g. what the user "
+    "asked before), answer using the conversation history below.\n"
+    "- Otherwise reply EXACTLY with this and nothing else: "
+    f'"{FALLBACK_MSG}"\n'
+    "Never use outside knowledge.\n\n"
+    "Conversation history:\n{history}\n\n"
+    "User's latest message: {question}\n"
+    "Answer:"
+)
+
 
 class RAGEngine:
     """Owns the models, the vector index, and the query logic."""
@@ -197,14 +213,16 @@ class RAGEngine:
             )
             for n in relevant
         ]
-        context = (
-            "\n\n---\n\n".join(n.node.get_content() for n in relevant)
-            if relevant
-            else "(no relevant document content found)"
-        )
-        prompt = CHAT_PROMPT.format(
-            history=self._format_history(history), context=context, question=question
-        )
+        history_text = self._format_history(history)
+        if relevant:
+            context = "\n\n---\n\n".join(n.node.get_content() for n in relevant)
+            prompt = CHAT_PROMPT.format(
+                history=history_text, context=context, question=question
+            )
+        else:
+            # Nothing matched the document -> strict prompt (conversation-only,
+            # otherwise the fallback message).
+            prompt = NO_CONTEXT_PROMPT.format(history=history_text, question=question)
         return prompt, relevant, sources
 
     # ---- QUERYING ----------------------------------------------------------

@@ -132,7 +132,10 @@ async def upload(
         raise HTTPException(400, "Only .pdf and .txt files are supported.")
 
     os.makedirs(settings.upload_dir, exist_ok=True)
-    dest = os.path.join(settings.upload_dir, file.filename)
+    # basename() strips any path components so a crafted filename can't write
+    # outside the uploads folder.
+    safe_name = os.path.basename(file.filename)
+    dest = os.path.join(settings.upload_dir, safe_name)
     with open(dest, "wb") as f:
         f.write(await file.read())
 

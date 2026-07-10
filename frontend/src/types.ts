@@ -22,6 +22,7 @@ export interface Session {
   title: string;
   messages: Message[];
   updatedAt: string;
+  docName?: string; // the document uploaded into this specific chat
 }
 
 // Shapes returned by the backend's MongoDB-backed session endpoints.

@@ -146,9 +146,10 @@ Then run the frontend with `npm run dev` as above.
 | `LLM_MODEL` | no | `llama-3.3-70b-versatile` | Which Groq model |
 | `EMBED_MODEL` | no | `BAAI/bge-small-en-v1.5` | Local embedding model |
 | `SIMILARITY_CUTOFF` | no | `0.35` | Below this, question is "not in document" |
-| `MONGO_URI` | no | — | Enables server-side session history |
+| `MONGO_URI` | no | — | Enables server-side session history (else in-memory) |
 | `DAPPIER_API_KEY` | no | — | Enables the web-search tool |
 | `CORS_ORIGINS` | no | localhost | Allowed frontend origins |
+| `DOMAIN` | for HTTPS | — | Domain Caddy fetches the TLS certificate for |
 
 ### Frontend (`frontend/.env`)
 | Variable | Default | Purpose |
@@ -159,13 +160,18 @@ Then run the frontend with `npm run dev` as above.
 
 ## API reference
 
+All requests carry an `X-User-Id` header (a stable id the frontend keeps in
+localStorage) so the backend can group each user's server-side sessions.
+
 | Method | Endpoint | Description |
 |---|---|---|
 | `GET` | `/api/health` | Liveness + which optional features are on |
-| `POST` | `/api/upload` | Upload & index a PDF/txt (multipart `file`) |
-| `POST` | `/api/ask` | `{ session_id, question, use_web }` → answer |
+| `POST` | `/api/upload` | Upload & index a PDF/txt (multipart `file`, `session_id`) |
+| `POST` | `/api/ask` | `{ session_id, question, use_web }` → answer (JSON) |
+| `POST` | `/api/ask/stream` | Same, but streams the answer token-by-token (NDJSON) |
 | `GET` | `/api/sessions` | List this user's chat sessions |
 | `GET` | `/api/sessions/{id}` | Full history of one session |
+| `PATCH` | `/api/sessions/{id}` | Rename a session |
 | `DELETE` | `/api/sessions/{id}` | Delete a session |
 
 ---
@@ -178,19 +184,31 @@ Then run the frontend with `npm run dev` as above.
 3. Add env var `VITE_API_URL` = your backend URL (e.g. `http://<ec2-ip>:8000`).
 4. Deploy. Vercel auto-runs `npm run build`.
 
-### Backend → AWS EC2 (Docker)
-1. Launch an Ubuntu EC2 instance; open ports **22** and **8000** in the security group.
-2. SSH in and install Docker:
+### Backend → AWS EC2 (Docker, HTTPS via Caddy)
+The `docker-compose.yml` runs three containers: the **backend**, **MongoDB**, and
+**Caddy** (a reverse proxy that auto-provisions a free Let's Encrypt HTTPS
+certificate). HTTPS is required because the Vercel frontend is served over HTTPS
+and browsers block HTTPS→HTTP ("mixed content") calls.
+
+1. Launch an Ubuntu EC2 instance. In the security group open ports **22** (SSH),
+   **80** and **443** (Caddy/HTTPS).
+2. Point a free domain at the instance's public IP — e.g. a
+   [DuckDNS](https://www.duckdns.org) subdomain like `yourname.duckdns.org`.
+3. SSH in and install Docker:
    ```bash
-   sudo apt update && sudo apt install -y docker.io docker-compose-plugin
+   curl -fsSL https://get.docker.com | sudo sh
    sudo usermod -aG docker $USER && newgrp docker
    ```
-3. Clone the repo, create `.env` with `GROQ_API_KEY` and `CORS_ORIGINS=https://<your-vercel-app>`.
-4. `docker compose up --build -d`
-5. Backend is live at `http://<ec2-public-ip>:8000`. Point the frontend's
-   `VITE_API_URL` at it and redeploy the frontend.
-
-> For HTTPS, put the API behind Nginx or a load balancer with a TLS certificate.
+4. Clone the repo and create `.env` next to `docker-compose.yml`:
+   ```
+   GROQ_API_KEY=your_key
+   DOMAIN=yourname.duckdns.org
+   CORS_ORIGINS=https://<your-vercel-app>.vercel.app
+   DAPPIER_API_KEY=your_dappier_key   # optional
+   ```
+5. `docker compose up --build -d`
+6. Backend is live at `https://yourname.duckdns.org`. Set the frontend's
+   `VITE_API_URL` to that URL and redeploy the frontend on Vercel.
 
 ---
 
@@ -202,15 +220,19 @@ Then run the frontend with `npm run dev` as above.
 | LlamaIndex ingest / chunk / embed / index / query | `rag_engine.py` |
 | Embeddings (free alternative to OpenAI) | HuggingFace `bge-small-en-v1.5` |
 | Store embeddings in ChromaDB | `rag_engine.py` (`ChromaVectorStore`) |
-| Fallback when question is unrelated | similarity cutoff in `rag_engine.py` |
+| Fallback when question is unrelated | grounding check in `rag_engine.py` |
 | New Chat / Chat History / Clear Chat | `Sidebar.tsx`, `ChatWindow.tsx`, `useSessions.ts` |
 | Persist chat across refresh (localStorage) | `useSessions.ts` |
 | TypeScript frontend, Python backend | `frontend/` + `backend/` |
 | Docker + EC2 | `Dockerfile`, `docker-compose.yml`, this README |
 | **Bonus:** Dappier web tool | `web_tool.py`, web toggle in UI |
-| **Bonus:** DB session storage + sidebar | `session_store.py` (MongoDB), `Sidebar.tsx` |
-| **Bonus:** user session management | cookie `uid` in `main.py` |
+| **Bonus:** DB-backed sessions + sidebar | `session_store.py` (MongoDB); sidebar loads from `/api/sessions` |
+| **Bonus:** user session management | `X-User-Id` header, resolved in `main.py` |
 | **Bonus:** CI/CD | `.github/workflows/` |
+
+**Beyond the brief:** conversation memory (follow-ups + "what did I ask?"),
+per-chat document isolation, streaming answers, light/dark theme, markdown
+answers, rename/export/delete chats.
 
 ---
 
