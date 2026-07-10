@@ -148,6 +148,7 @@ export default function App() {
           onToggleWeb={setUseWeb}
           webAvailable={webAvailable}
           hasDoc={!!docName}
+          docName={docName}
         />
       </main>
     </div>

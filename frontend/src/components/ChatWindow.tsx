@@ -14,6 +14,7 @@ interface Props {
   onToggleWeb: (v: boolean) => void;
   webAvailable: boolean;
   hasDoc: boolean;
+  docName: string | null;
 }
 
 export function ChatWindow({
@@ -25,6 +26,7 @@ export function ChatWindow({
   onToggleWeb,
   webAvailable,
   hasDoc,
+  docName,
 }: Props) {
   const [draft, setDraft] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -61,12 +63,21 @@ export function ChatWindow({
       <div className="messages">
         {messages.length === 0 && (
           <div className="placeholder">
-            <h2>Ask anything about your document</h2>
-            <p>
-              {hasDoc
-                ? "Your document is ready — type a question below."
-                : "Upload a PDF or .txt file (or drag it anywhere), then type a question below."}
-            </p>
+            {hasDoc ? (
+              <>
+                <div className="wave">👋</div>
+                <h2>Hi! What would you like to ask today?</h2>
+                <p className="ready-line">
+                  <span className="doc-dot" /> Ready to answer questions about{" "}
+                  <strong>{docName}</strong>
+                </p>
+              </>
+            ) : (
+              <>
+                <h2>Ask anything about your document</h2>
+                <p>Upload a PDF or .txt file (or drag it anywhere) to get started.</p>
+              </>
+            )}
           </div>
         )}
         {messages.map((m, i) => (
