@@ -18,6 +18,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Install Python dependencies first so Docker can cache this layer.
 COPY requirements.txt .
+# Install the CPU-only build of PyTorch explicitly. Without this, pip would pull
+# the default GPU/CUDA build (~2.5GB) via sentence-transformers — far too big for
+# a small CPU server. The CPU wheel is ~180MB and all we need (no GPU here).
+RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the application code.
