@@ -12,6 +12,12 @@ Built for the AI20 Labs Software Engineer technical assignment.
 - **Vector store:** ChromaDB (persistent, on disk)
 - **Bonus:** MongoDB session storage, Dappier web access, cookie-based user sessions, GitHub Actions CI/CD, Docker
 
+### UX highlights
+Streaming answers (token-by-token, like ChatGPT), light/dark theme toggle,
+renamable chat history, delete confirmation, export chat to Markdown, markdown-
+formatted answers with copy buttons and timestamps, drag-and-drop upload, and a
+clear "document ready" indicator.
+
 ---
 
 ## Demo

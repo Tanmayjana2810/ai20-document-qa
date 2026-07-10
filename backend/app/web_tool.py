@@ -26,9 +26,12 @@ def search_web(query: str) -> str | None:
     if not web_enabled():
         return None
     try:
+        import os
         from dappier import Dappier
 
-        client = Dappier(api_key=settings.dappier_api_key)
+        # The Dappier SDK reads the key from this env var (per its docs).
+        os.environ["DAPPIER_API_KEY"] = settings.dappier_api_key
+        client = Dappier()
         response = client.search_real_time_data(
             query=query, ai_model_id=_REALTIME_MODEL_ID
         )
