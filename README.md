@@ -16,10 +16,12 @@ Built for the AI20 Labs Software Engineer technical assignment.
 
 ## Demo
 
-> **TODO before submitting:** add your deployed frontend link and a 1–2 minute screen recording here.
->
-> - Live app: `https://<your-app>.vercel.app`
-> - Video: `https://<loom-or-drive-link>`
+- **Live app (frontend):** https://ai20-document-qa.vercel.app
+- **Backend API + docs:** https://tanmayai20qa.duckdns.org/docs
+- **Video walkthrough:** _add your 1–2 min screen-recording link here (Loom / Google Drive)_
+
+Deployment at a glance: React + TypeScript frontend on **Vercel** (HTTPS), FastAPI
+backend in **Docker on AWS EC2**, fronted by **Caddy** for automatic HTTPS.
 
 ---
 

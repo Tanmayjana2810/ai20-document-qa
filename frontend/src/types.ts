@@ -3,11 +3,18 @@
 
 export type Role = "user" | "assistant";
 
+export interface SourceChunk {
+  text: string;
+  score: number;
+  document?: string;
+}
+
 export interface Message {
   role: Role;
   content: string;
   createdAt: string; // ISO timestamp
   grounded?: boolean; // true if the answer came from the document
+  sources?: SourceChunk[]; // document snippets the answer was based on
 }
 
 export interface Session {

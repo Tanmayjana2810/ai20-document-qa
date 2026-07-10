@@ -1,7 +1,9 @@
 // A single chat bubble. User messages sit on the right, assistant on the left.
-// When the assistant answered from OUTSIDE the document (fallback / web), we
-// show a small badge so the user knows the source.
+// Assistant answers are rendered as Markdown (so bold, lists, code render nicely).
+// Each assistant message has a copy button and every message shows a timestamp.
 
+import { useState } from "react";
+import ReactMarkdown from "react-markdown";
 import type { Message } from "../types";
 
 interface Props {
@@ -9,8 +11,29 @@ interface Props {
   typing?: boolean;
 }
 
+function formatTime(iso: string): string {
+  if (!iso) return "";
+  try {
+    return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  } catch {
+    return "";
+  }
+}
+
 export function MessageBubble({ message, typing }: Props) {
   const isUser = message.role === "user";
+  const [copied, setCopied] = useState(false);
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(message.content);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* clipboard blocked — ignore */
+    }
+  }
+
   return (
     <div className={`bubble-row ${isUser ? "user" : "assistant"}`}>
       <div className={`bubble ${isUser ? "user" : "assistant"}`}>
@@ -22,10 +45,26 @@ export function MessageBubble({ message, typing }: Props) {
           </span>
         ) : (
           <>
-            <div className="bubble-text">{message.content}</div>
+            <div className="bubble-text">
+              {isUser ? (
+                message.content
+              ) : (
+                <ReactMarkdown>{message.content}</ReactMarkdown>
+              )}
+            </div>
+
             {!isUser && message.grounded === false && (
               <div className="badge not-in-doc">Not found in document</div>
             )}
+
+            <div className="bubble-meta">
+              {message.createdAt && <span className="time">{formatTime(message.createdAt)}</span>}
+              {!isUser && (
+                <button className="copy-btn" onClick={copy} title="Copy answer">
+                  {copied ? "Copied!" : "Copy"}
+                </button>
+              )}
+            </div>
           </>
         )}
       </div>

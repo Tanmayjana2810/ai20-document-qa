@@ -1,31 +1,17 @@
-// The upload control in the top bar. Sends the chosen file to POST /api/upload,
-// where the backend parses and indexes it. Shows progress + a success message.
+// The upload control in the top bar. It's "controlled" — the actual upload
+// logic lives in App (so drag-and-drop can reuse it); this component just shows
+// the button + status and reports the chosen file back up via onFile.
 
-import { useRef, useState } from "react";
-import { api } from "../api";
+import { useRef } from "react";
 
 interface Props {
-  onUploaded: (filename: string) => void;
+  busy: boolean;
+  status: string;
+  onFile: (file: File) => void;
 }
 
-export function UploadPanel({ onUploaded }: Props) {
+export function UploadPanel({ busy, status, onFile }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [status, setStatus] = useState<string>("");
-  const [busy, setBusy] = useState(false);
-
-  async function handleFile(file: File) {
-    setBusy(true);
-    setStatus(`Uploading ${file.name}…`);
-    try {
-      const res = await api.upload(file);
-      setStatus(res.message);
-      onUploaded(res.filename);
-    } catch (err) {
-      setStatus(`Upload failed: ${(err as Error).message}`);
-    } finally {
-      setBusy(false);
-    }
-  }
 
   return (
     <div className="upload">
@@ -36,7 +22,8 @@ export function UploadPanel({ onUploaded }: Props) {
         hidden
         onChange={(e) => {
           const f = e.target.files?.[0];
-          if (f) handleFile(f);
+          if (f) onFile(f);
+          e.target.value = ""; // allow re-uploading the same file
         }}
       />
       <button className="upload-btn" disabled={busy} onClick={() => inputRef.current?.click()}>

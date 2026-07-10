@@ -13,6 +13,7 @@ interface Props {
   useWeb: boolean;
   onToggleWeb: (v: boolean) => void;
   webAvailable: boolean;
+  hasDoc: boolean;
 }
 
 export function ChatWindow({
@@ -23,11 +24,11 @@ export function ChatWindow({
   useWeb,
   onToggleWeb,
   webAvailable,
+  hasDoc,
 }: Props) {
   const [draft, setDraft] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to the newest message.
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, sending]);
@@ -61,20 +62,26 @@ export function ChatWindow({
         {messages.length === 0 && (
           <div className="placeholder">
             <h2>Ask anything about your document</h2>
-            <p>Upload a PDF or .txt file, then type a question below.</p>
+            <p>
+              {hasDoc
+                ? "Your document is ready — type a question below."
+                : "Upload a PDF or .txt file (or drag it anywhere), then type a question below."}
+            </p>
           </div>
         )}
         {messages.map((m, i) => (
           <MessageBubble key={i} message={m} />
         ))}
-        {sending && <MessageBubble message={{ role: "assistant", content: "…", createdAt: "" }} typing />}
+        {sending && (
+          <MessageBubble message={{ role: "assistant", content: "…", createdAt: "" }} typing />
+        )}
         <div ref={bottomRef} />
       </div>
 
       <div className="composer">
         <textarea
           value={draft}
-          placeholder="Ask a question…"
+          placeholder={hasDoc ? "Ask a question…" : "Upload a document first…"}
           rows={1}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => {
