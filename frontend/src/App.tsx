@@ -21,6 +21,7 @@ export default function App() {
     deleteSession,
     renameSession,
     addMessage,
+    updateLastMessage,
   } = useSessions();
 
   const { theme, toggle } = useTheme();
@@ -61,22 +62,24 @@ export default function App() {
   }
 
   async function handleAsk(question: string) {
+    // Add the user message and an empty assistant placeholder to fill in as the
+    // answer streams in.
     addMessage({ role: "user", content: question, createdAt: new Date().toISOString() });
+    addMessage({ role: "assistant", content: "", createdAt: new Date().toISOString() });
     setSending(true);
+
+    let acc = "";
     try {
-      const res = await api.ask(activeId, question, useWeb);
-      addMessage({
-        role: "assistant",
-        content: res.answer,
-        createdAt: new Date().toISOString(),
-        grounded: res.grounded,
-        sources: res.sources,
+      await api.askStream(activeId, question, useWeb, {
+        onMeta: (grounded) => updateLastMessage({ grounded }),
+        onToken: (text) => {
+          acc += text;
+          updateLastMessage({ content: acc });
+        },
       });
     } catch (err) {
-      addMessage({
-        role: "assistant",
+      updateLastMessage({
         content: `⚠️ Error contacting the server: ${(err as Error).message}`,
-        createdAt: new Date().toISOString(),
       });
     } finally {
       setSending(false);

@@ -23,6 +23,7 @@ export function Sidebar({
 }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
   function startEdit(s: Session) {
     setEditingId(s.id);
@@ -75,29 +76,56 @@ export function Sidebar({
               </span>
             )}
 
-            {editingId !== s.id && (
-              <div className="history-actions">
+            {confirmingId === s.id ? (
+              <div className="confirm-actions" onClick={(e) => e.stopPropagation()}>
+                <span className="confirm-text">Delete?</span>
                 <button
-                  className="edit-btn"
-                  title="Rename conversation"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    startEdit(s);
-                  }}
-                >
-                  ✎
-                </button>
-                <button
-                  className="delete-btn"
-                  title="Delete conversation"
+                  className="confirm-yes"
+                  title="Confirm delete"
                   onClick={(e) => {
                     e.stopPropagation();
                     onDelete(s.id);
+                    setConfirmingId(null);
                   }}
                 >
-                  ×
+                  ✓
+                </button>
+                <button
+                  className="confirm-no"
+                  title="Cancel"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setConfirmingId(null);
+                  }}
+                >
+                  ✗
                 </button>
               </div>
+            ) : (
+              editingId !== s.id && (
+                <div className="history-actions">
+                  <button
+                    className="edit-btn"
+                    title="Rename conversation"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      startEdit(s);
+                    }}
+                  >
+                    ✎
+                  </button>
+                  <button
+                    className="delete-btn"
+                    title="Delete conversation"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setConfirmingId(s.id);
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
+              )
             )}
           </div>
         ))}

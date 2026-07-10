@@ -42,22 +42,44 @@ export function ChatWindow({
     setDraft("");
   }
 
+  // Download the current conversation as a Markdown file.
+  function exportChat() {
+    if (messages.length === 0) return;
+    const md = messages
+      .map((m) => `**${m.role === "user" ? "You" : "Assistant"}:**\n\n${m.content}`)
+      .join("\n\n---\n\n");
+    const blob = new Blob([md], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `ai20-chat-${new Date().toISOString().slice(0, 10)}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <section className="chat">
       <div className="chat-toolbar">
-        {webAvailable && (
-          <label className="web-toggle">
-            <input
-              type="checkbox"
-              checked={useWeb}
-              onChange={(e) => onToggleWeb(e.target.checked)}
-            />
-            Search the web if not in document
-          </label>
-        )}
-        <button className="clear-btn" onClick={onClear} disabled={messages.length === 0}>
-          Clear Chat
-        </button>
+        <div className="toolbar-left-slot">
+          {webAvailable && (
+            <label className="web-toggle">
+              <input
+                type="checkbox"
+                checked={useWeb}
+                onChange={(e) => onToggleWeb(e.target.checked)}
+              />
+              Search the web if not in document
+            </label>
+          )}
+        </div>
+        <div className="toolbar-actions">
+          <button className="clear-btn" onClick={exportChat} disabled={messages.length === 0}>
+            Export
+          </button>
+          <button className="clear-btn" onClick={onClear} disabled={messages.length === 0}>
+            Clear Chat
+          </button>
+        </div>
       </div>
 
       <div className="messages">
@@ -83,9 +105,6 @@ export function ChatWindow({
         {messages.map((m, i) => (
           <MessageBubble key={i} message={m} />
         ))}
-        {sending && (
-          <MessageBubble message={{ role: "assistant", content: "…", createdAt: "" }} typing />
-        )}
         <div ref={bottomRef} />
       </div>
 

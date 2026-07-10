@@ -111,6 +111,22 @@ export function useSessions() {
     [activeId]
   );
 
+  // Patch the most recent message of the active session. Used during streaming
+  // to grow the assistant's answer token-by-token.
+  const updateLastMessage = useCallback(
+    (patch: Partial<Message>) => {
+      setSessions((prev) =>
+        prev.map((s) => {
+          if (s.id !== activeId || s.messages.length === 0) return s;
+          const messages = [...s.messages];
+          messages[messages.length - 1] = { ...messages[messages.length - 1], ...patch };
+          return { ...s, messages, updatedAt: new Date().toISOString() };
+        })
+      );
+    },
+    [activeId]
+  );
+
   return {
     sessions,
     active,
@@ -121,5 +137,6 @@ export function useSessions() {
     deleteSession,
     renameSession,
     addMessage,
+    updateLastMessage,
   };
 }

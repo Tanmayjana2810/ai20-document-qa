@@ -2,5 +2,9 @@
 # Caddy automatically gets + renews a Let's Encrypt HTTPS certificate for this
 # domain and reverse-proxies all requests to the backend container on port 8000.
 {$DOMAIN} {
-    reverse_proxy backend:8000
+    reverse_proxy backend:8000 {
+        # Flush immediately so streamed answers (NDJSON) reach the browser
+        # token-by-token instead of being buffered until the response ends.
+        flush_interval -1
+    }
 }

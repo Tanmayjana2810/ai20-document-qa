@@ -32,4 +32,46 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ session_id: sessionId, question, use_web: useWeb }),
     }),
+
+  // Streaming version: reads the NDJSON stream and fires callbacks as tokens
+  // arrive, so the UI can render the answer word-by-word like ChatGPT.
+  askStream: async (
+    sessionId: string,
+    question: string,
+    useWeb: boolean,
+    handlers: {
+      onMeta?: (grounded: boolean, sources: unknown[]) => void;
+      onToken?: (text: string) => void;
+      onDone?: () => void;
+    }
+  ): Promise<void> => {
+    const res = await fetch(`${BASE}/api/ask/stream`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ session_id: sessionId, question, use_web: useWeb }),
+    });
+    if (!res.ok || !res.body) throw new Error(`${res.status}: ${await res.text()}`);
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    // Read chunks, split on newlines, and parse each NDJSON line.
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      let nl: number;
+      while ((nl = buffer.indexOf("\n")) >= 0) {
+        const line = buffer.slice(0, nl).trim();
+        buffer = buffer.slice(nl + 1);
+        if (!line) continue;
+        const evt = JSON.parse(line);
+        if (evt.type === "meta") handlers.onMeta?.(evt.grounded, evt.sources);
+        else if (evt.type === "token") handlers.onToken?.(evt.text);
+        else if (evt.type === "done") handlers.onDone?.();
+      }
+    }
+  },
 };

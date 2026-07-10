@@ -18,15 +18,17 @@ Interactive docs:  http://localhost:8000/docs
 
 from __future__ import annotations
 
+import json
 import os
 import uuid
 
 from fastapi import Cookie, Depends, FastAPI, File, HTTPException, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 
 from .config import settings
 from .ingest import load_document
-from .rag_engine import engine
+from .rag_engine import FALLBACK_MSG, engine
 from .schemas import (
     AskRequest,
     AskResponse,
@@ -116,6 +118,48 @@ async def ask(body: AskRequest, user_id: str = Depends(current_user)) -> AskResp
         user_id, body.session_id, ChatMessage(role="assistant", content=answer)
     )
     return AskResponse(answer=answer, grounded=grounded, sources=sources)
+
+
+@app.post("/api/ask/stream")
+async def ask_stream(body: AskRequest, user_id: str = Depends(current_user)) -> StreamingResponse:
+    """Same as /api/ask, but streams the answer token-by-token as newline-
+    delimited JSON (NDJSON). Each line is one of:
+      {"type":"meta","grounded":bool,"sources":[...]}
+      {"type":"token","text":"..."}
+      {"type":"done"}
+    """
+    store.upsert_message(
+        user_id, body.session_id, ChatMessage(role="user", content=body.question)
+    )
+    grounded, sources, token_gen = engine.query_stream(body.question)
+
+    def event_stream():
+        yield json.dumps(
+            {"type": "meta", "grounded": grounded, "sources": [s.model_dump() for s in sources]}
+        ) + "\n"
+
+        full = ""
+        if token_gen is not None:
+            # Grounded: stream the LLM's tokens as they arrive.
+            for token in token_gen:
+                full += token
+                yield json.dumps({"type": "token", "text": token}) + "\n"
+        else:
+            # Not in the document: fall back to web (if enabled) or the message.
+            answer = FALLBACK_MSG
+            if body.use_web and web_enabled():
+                web_answer = search_web(body.question)
+                if web_answer:
+                    answer = web_answer
+            full = answer
+            yield json.dumps({"type": "token", "text": answer}) + "\n"
+
+        store.upsert_message(
+            user_id, body.session_id, ChatMessage(role="assistant", content=full)
+        )
+        yield json.dumps({"type": "done"}) + "\n"
+
+    return StreamingResponse(event_stream(), media_type="application/x-ndjson")
 
 
 @app.get("/api/sessions", response_model=list[SessionSummary])

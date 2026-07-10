@@ -88,6 +88,17 @@ body { background: var(--bg); color: var(--text); }
   font-size: 14px; font-family: inherit;
 }
 .history-edit:focus { outline: none; }
+
+/* Delete confirmation */
+.confirm-actions { display: flex; align-items: center; gap: 6px; flex: none; }
+.confirm-text { font-size: 12px; color: var(--muted); }
+.confirm-yes, .confirm-no {
+  background: none; border: none; cursor: pointer; font-size: 13px; padding: 0 2px; line-height: 1;
+}
+.confirm-yes { color: var(--danger); }
+.confirm-no { color: var(--muted); }
+.confirm-yes:hover { color: #ff8b8b; }
+.confirm-no:hover { color: var(--text); }
 .empty { color: var(--muted); font-size: 13px; padding: 8px 4px; }
 .sidebar-footer { color: var(--muted); font-size: 12px; padding-top: 10px; border-top: 1px solid var(--border); }
 
@@ -116,6 +127,8 @@ body { background: var(--bg); color: var(--text); }
   display: flex; align-items: center; justify-content: space-between;
   padding: 10px 24px; gap: 12px; border-bottom: 1px solid var(--border);
 }
+.toolbar-left-slot { flex: 1; min-width: 0; }
+.toolbar-actions { display: flex; align-items: center; gap: 8px; flex: none; }
 .web-toggle { color: var(--muted); font-size: 13px; display: flex; align-items: center; gap: 8px; cursor: pointer; }
 .clear-btn {
   background: none; border: 1px solid var(--border); color: var(--muted);

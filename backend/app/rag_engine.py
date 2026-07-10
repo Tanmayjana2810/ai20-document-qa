@@ -157,6 +157,47 @@ class RAGEngine:
         response = synthesizer.synthesize(question, nodes=relevant)
         return str(response).strip(), True, sources
 
+    # ---- STREAMING QUERY ---------------------------------------------------
+    def query_stream(self, question: str):
+        """Like query(), but returns a token generator for streaming answers.
+
+        Returns (grounded, sources, token_gen). When grounded is False the
+        token_gen is None and the caller streams the fallback / web answer.
+        """
+        self._lazy_init()
+        assert self._index is not None
+
+        retriever = self._index.as_retriever(similarity_top_k=settings.similarity_top_k)
+        scored_nodes = retriever.retrieve(question)
+        relevant = [n for n in scored_nodes if (n.score or 0) >= settings.similarity_cutoff]
+
+        if not relevant:
+            return False, [], None
+
+        sources = [
+            SourceChunk(
+                text=n.node.get_content()[:400],
+                score=round(n.score or 0, 3),
+                document=n.node.metadata.get("file_name"),
+            )
+            for n in relevant
+        ]
+
+        # No LLM -> yield the best chunk as a single "token".
+        if LlamaSettings.llm is None:
+            text = relevant[0].node.get_content()
+
+            def _one():
+                yield text
+
+            return True, sources, _one()
+
+        # streaming=True makes synthesize() return a response whose .response_gen
+        # yields the answer token-by-token as the LLM produces it.
+        synthesizer = get_response_synthesizer(text_qa_template=QA_TEMPLATE, streaming=True)
+        streaming_response = synthesizer.synthesize(question, nodes=relevant)
+        return True, sources, streaming_response.response_gen
+
 
 # One shared engine for the whole app.
 engine = RAGEngine()

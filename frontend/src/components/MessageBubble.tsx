@@ -24,6 +24,10 @@ export function MessageBubble({ message, typing }: Props) {
   const isUser = message.role === "user";
   const [copied, setCopied] = useState(false);
 
+  // Show the typing animation for an assistant bubble that has no text yet
+  // (i.e. we're waiting for the first streamed token).
+  const showTyping = typing || (!isUser && message.content === "");
+
   async function copy() {
     try {
       await navigator.clipboard.writeText(message.content);
@@ -37,7 +41,7 @@ export function MessageBubble({ message, typing }: Props) {
   return (
     <div className={`bubble-row ${isUser ? "user" : "assistant"}`}>
       <div className={`bubble ${isUser ? "user" : "assistant"}`}>
-        {typing ? (
+        {showTyping ? (
           <span className="typing">
             <span></span>
             <span></span>
