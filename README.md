@@ -41,7 +41,7 @@ A personal full-stack project by **Tanmay Jana** exploring retrieval-augmented g
 
 ## Demo
 
-- **Live app (frontend):** https://ai20-document-qa.vercel.app
+- **Live app (frontend):** https://tanmay-docuchat.vercel.app
 - **Backend API + docs:** https://tanmayai20qa.duckdns.org/docs
 - **Video walkthrough:** https://drive.google.com/file/d/1Pm2zI6HamSBtEjwOY-gqaGOW7SOVqzzT/view?usp=sharing
 
