@@ -9,6 +9,7 @@ import { UploadPanel } from "./components/UploadPanel";
 import { useSessions } from "./hooks/useSessions";
 import { useTheme } from "./hooks/useTheme";
 import { api } from "./api";
+import type { Message } from "./types";
 
 export default function App() {
   const {
@@ -98,7 +99,8 @@ export default function App() {
     let errored = false;
     try {
       await api.askStream(activeId, question, useWeb, {
-        onMeta: (grounded) => updateLastMessage({ grounded }),
+        onMeta: (grounded, sources) =>
+          updateLastMessage({ grounded, sources: sources as Message["sources"] }),
         onToken: (text) => {
           acc += text;
           updateLastMessage({ content: acc });

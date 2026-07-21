@@ -165,6 +165,43 @@ body { background: var(--bg); color: var(--text); }
 .badge { display: inline-block; margin-top: 8px; font-size: 11px; padding: 3px 8px; border-radius: 999px; }
 .badge.not-in-doc { background: rgba(255,107,107,0.15); color: var(--danger); }
 
+/* ---- Source citations (grounded answers) ---- */
+.sources { margin-top: 10px; }
+.sources-toggle {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: none; border: none; padding: 0; cursor: pointer;
+  color: var(--muted); font-size: 12px; font-weight: 500;
+}
+.sources-toggle:hover { color: var(--accent); }
+.chevron { display: inline-block; font-size: 9px; transition: transform 0.15s; }
+.chevron.open { transform: rotate(90deg); }
+.sources-list { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 8px; }
+.source-item {
+  background: var(--panel-2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px 10px;
+}
+.source-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; margin-bottom: 6px;
+}
+.source-doc {
+  font-size: 12px; color: var(--text); font-weight: 500;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;
+}
+.source-score {
+  flex-shrink: 0; font-size: 11px; font-weight: 600; color: var(--accent);
+  background: rgba(109,124,255,0.14); padding: 2px 8px; border-radius: 999px;
+}
+.score-bar {
+  height: 4px; border-radius: 999px; background: var(--border);
+  overflow: hidden; margin-bottom: 6px;
+}
+.score-fill { display: block; height: 100%; background: var(--accent); border-radius: 999px; }
+.source-text {
+  margin: 0; font-size: 12px; line-height: 1.5; color: var(--muted);
+  white-space: pre-wrap; word-break: break-word;
+}
+
 /* typing indicator */
 .typing { display: inline-flex; gap: 4px; }
 .typing span { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); animation: blink 1.2s infinite both; }
